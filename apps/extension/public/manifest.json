@@ -3,7 +3,7 @@
   "name": "Dopamine Tracker",
   "version": "1.0",
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "/src/popup/popup.html"
   },
   "background": {
     "service_worker": "background.js"
