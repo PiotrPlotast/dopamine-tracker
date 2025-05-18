@@ -1,21 +1,9 @@
 import ReactDOM from "react-dom/client";
-import { getDomainFromUrl } from "../shared/utils/tabHelpers";
 import { computeDopamineScore } from "../shared/utils/dopamine";
 
 function Popup() {
-  // chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-  //   const tab = tabs[0];
-  //   const tabstest = tabs;
-  //   if (tab?.url) {
-  //     const domain = getDomainFromUrl(tab.url);
-  //     const score = computeDopamineScore(domain, 5 * 60 * 1000);
-  //     document.getElementById("score")!.textContent = `Dopamine: ${score}`;
-  //     document.getElementById("domain")!.textContent = `Domain: ${domain}`;
-  //   }
-  // });
   chrome.storage.local.get("currentSession", (result) => {
     const session = result.currentSession;
-
     if (session?.domain && session?.duration) {
       const domain = session.domain;
       const duration = session.duration;
