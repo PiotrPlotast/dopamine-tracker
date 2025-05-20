@@ -1,44 +1,27 @@
-import { getDomainFromUrl } from "./shared/utils/tabHelpers";
+import { applyDecay, getColorForLevel } from "./shared/utils/dopamine";
 
-let activeTabId: number | null = null;
-let activeStartTime = Date.now();
-let activeDomain = "";
+type SessionEntry = {
+  domain: string;
+  timestamp: number;
+  rawScore: number;
+};
 
-console.log("[background] Loaded service worker");
-
-chrome.tabs.onActivated.addListener((activeInfo) => {
-  console.log("[background] Tab activated:", activeInfo);
-});
-
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  await handleTabSwitch(activeInfo.tabId);
-});
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (tabId === activeTabId && changeInfo.url) {
-    activeDomain = getDomainFromUrl(changeInfo.url);
-  }
-});
-
-async function handleTabSwitch(newTabId: number) {
+async function updateDopamineLevel() {
   const now = Date.now();
+  const { dopamineSessions = [] }: { dopamineSessions: SessionEntry[] } =
+    await chrome.storage.local.get("dopamineSessions");
 
-  if (activeDomain) {
-    const duration = now - activeStartTime;
+  const total = dopamineSessions.reduce((sum, session) => {
+    const hoursAgo = (now - session.timestamp) / 3600000;
+    return sum + applyDecay(session.rawScore, hoursAgo);
+  }, 0);
 
-    await chrome.storage.local.set({
-      currentSession: {
-        domain: activeDomain,
-        duration: duration,
-        updatedAt: now,
-      },
-    });
-  }
+  await chrome.storage.local.set({ currentDopamineLevel: total });
 
-  activeStartTime = now;
-  activeTabId = newTabId;
-
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  const newTab = tabs[0];
-  activeDomain = newTab.url ? getDomainFromUrl(newTab.url) : "";
+  chrome.action.setBadgeText({ text: Math.round(total).toString() });
+  chrome.action.setBadgeBackgroundColor({ color: getColorForLevel(total) });
 }
+
+// Set interval on load
+updateDopamineLevel();
+setInterval(updateDopamineLevel, 1 * 60 * 1000);
