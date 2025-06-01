@@ -11,6 +11,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "chart.js": "^4.4.9",
     "vite-plugin-static-copy": "^2.3.1"
   },
   "devDependencies": {
