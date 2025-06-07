@@ -1,72 +1,62 @@
-type SiteWeights = Record<string, number>;
+import { getDomainFromUrl } from "./tabHelpers";
+import dopamineScoreMap from "./domains.json";
 
-const defaultSiteWeights: SiteWeights = {
-  "youtube.com": 0.95,
-  "twitter.com": 0.9,
-  "reddit.com": 0.85,
-  "netflix.com": 0.9,
-  "wikipedia.org": 0.2,
-  "chat.openai.com": 0.4,
-  "docs.google.com": 0.3,
-  "github.com": 0.3,
-  "stackoverflow.com": 0.3,
-};
-
-export function getDopamineWeight(domain: string): number {
-  return defaultSiteWeights[domain] ?? 0.5;
+interface Activity {
+  domain: string;
+  duration: number;
+  clicks: number;
+  scrolls: number;
+  hour_of_day: number;
+  date: Date;
 }
 
-export function updateCurrentDopamine(spike: number) {
-  chrome.storage.local.get("currentDopamineLevel", (data) => {
-    const current = data.currentDopamineLevel ?? 0;
-    const updated = current + spike;
-    chrome.storage.local.set({ currentDopamineLevel: updated });
-  });
+interface Supabase_Log {
+  id: string;
+  user_id: string;
+  domain: string;
+  duration: number;
+  clicks: number;
+  scroll_depth: number;
+  hour_of_day: number;
+  date: Date;
+  timestamp: Date;
+  dopamine_label: string;
 }
 
-export function computeDopamineScore(
-  domain: string,
-  durationMs: number
-): number {
-  const minutes = durationMs / 60000;
-  const weight = getDopamineWeight(domain);
-  // Example formula: dopamine ∝ weight × sqrt(time)
-  return parseFloat((weight * Math.sqrt(minutes)).toFixed(2));
+export function classifyDopamineActivity(
+  activity: Activity
+): "low" | "medium" | "high" {
+  const domain = getDomainFromUrl(activity.domain);
+  const score =
+    domain in dopamineScoreMap
+      ? dopamineScoreMap[domain as keyof typeof dopamineScoreMap]
+      : 3;
+  const durationMinutes = activity.duration / 60;
+  const scrollRate = activity.scrolls / durationMinutes;
+  const clickRate = activity.clicks / durationMinutes;
+
+  let dopamineLevel = score;
+
+  if (scrollRate > 10) dopamineLevel += 2;
+  if (scrollRate > 100) dopamineLevel += 5;
+  if (clickRate > 5) dopamineLevel += 1;
+  if (durationMinutes >= 15) dopamineLevel += 0.5;
+  if (durationMinutes >= 30) dopamineLevel += 1.5;
+  console.log(dopamineLevel);
+  if (dopamineLevel >= 6) return "high";
+  if (dopamineLevel >= 4) return "medium";
+  return "low";
 }
 
-export function isHighDopamine(score: number): boolean {
-  return score >= 2.5; // Threshold — adjust based on data
+// Decay function: reduces score over time (example implementation)
+export function applyDecay(rawScore: number, hoursAgo: number): number {
+  const decayRate = 0.5; // adjust as needed
+  return rawScore * Math.exp(-decayRate * hoursAgo);
 }
 
-export function applyDecay(score: number, hoursAgo: number): number {
-  const decayRate = 0.05;
-  return score * Math.exp(-decayRate * hoursAgo);
-}
-
+// Color function: returns a color string based on dopamine level (example)
 export function getColorForLevel(level: number): string {
-  if (level < 50) return "#2ECC71";
-  if (level < 150) return "#F1C40F";
-  return "#E74C3C";
-}
-
-export function getLiveDopamineState(level: number): "low" | "medium" | "high" {
-  if (level < 50) return "low";
-  if (level < 150) return "medium";
-  return "high";
-}
-export function calculateDopamineSpike(domain: string): number {
-  const HIGH = ["instagram.com", "youtube.com", "reddit.com"];
-  const MEDIUM = ["twitter.com", "tiktok.com"];
-  const LOW = ["wikipedia.org", "github.com"];
-
-  if (HIGH.includes(domain)) return 30;
-  if (MEDIUM.includes(domain)) return 15;
-  if (LOW.includes(domain)) return 5;
-  return 10;
-}
-
-export function getDopamineState(level: number): "low" | "medium" | "high" {
-  if (level < 60) return "low";
-  if (level < 140) return "medium";
-  return "high";
+  if (level > 20) return "#ff4d4f"; // red
+  if (level > 10) return "#faad14"; // orange
+  return "#52c41a"; // green
 }
