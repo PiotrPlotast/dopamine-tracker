@@ -2,14 +2,17 @@ import React, { useEffect, useRef, useState } from "react";
 import Chart from "chart.js/auto";
 
 function App() {
-  const [score, setScore] = useState(null);
-  const chartRef = useRef(null);
-  const chartInstance = useRef(null);
+  const [score, setScore] = useState<number | null>(null);
+  const chartRef = useRef<HTMLCanvasElement | null>(null);
+  const chartInstance = useRef<Chart | null>(null);
   const lastTimestamp = useRef(null);
-  const dataPoints = useRef([]);
+  const dataPoints = useRef<number[]>([]);
 
   useEffect(() => {
+    if (!chartRef.current) return;
+
     const ctx = chartRef.current.getContext("2d");
+    if (!ctx) return;
 
     chartInstance.current = new Chart(ctx, {
       type: "line",
@@ -53,15 +56,20 @@ function App() {
     chrome.storage.local.get("scoreHistory", (result) => {
       const history = result.scoreHistory || [];
       const chart = chartInstance.current;
+      if (!chart) return;
+      interface ScoreHistoryEntry {
+        score: number;
+        timestamp: number;
+      }
 
-      history.forEach((entry) => {
-        const label = new Date(entry.timestamp).toLocaleTimeString();
+      (history as ScoreHistoryEntry[]).forEach((entry: ScoreHistoryEntry) => {
+        const label: string = new Date(entry.timestamp).toLocaleTimeString();
         dataPoints.current.push(entry.score);
 
-        chart.data.labels.push(label);
+        (chart.data.labels ??= []).push(label);
         chart.data.datasets[0].data.push(entry.score);
         chart.data.datasets[1].data.push(
-          calculateMovingAverage(dataPoints.current, 5)
+          Number(calculateMovingAverage(dataPoints.current, 5))
         );
         chart.data.datasets[2].data.push(50);
       });
@@ -84,41 +92,55 @@ function App() {
 
     return () => {
       clearInterval(interval);
-      chartInstance.current.destroy();
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+      }
     };
   }, []);
 
-  function updateChart(newScore, time) {
+  interface UpdateChartParams {
+    newScore: number;
+    time: number;
+  }
+
+  function updateChart(newScore: number, time: number): void {
     setScore(newScore);
 
     const chart = chartInstance.current;
-    const label = new Date(time).toLocaleTimeString();
+    const label: string = new Date(time).toLocaleTimeString();
 
     dataPoints.current.push(newScore);
     if (dataPoints.current.length > 20) {
       dataPoints.current.shift();
     }
 
-    const ma = calculateMovingAverage(dataPoints.current, 5);
+    const ma: string = calculateMovingAverage(dataPoints.current, 5);
 
-    chart.data.labels.push(label);
-    chart.data.datasets[0].data.push(newScore);
-    chart.data.datasets[1].data.push(ma);
-    chart.data.datasets[2].data.push(50); // baseline
+    if (chart && chart.data.labels && Array.isArray(chart.data.labels)) {
+      (chart.data.labels as string[]).push(label);
+      (chart.data.datasets[0].data as number[]).push(newScore);
+      (chart.data.datasets[1].data as number[]).push(Number(ma));
+      (chart.data.datasets[2].data as number[]).push(50); // baseline
 
-    if (chart.data.labels.length > 20) {
-      chart.data.labels.shift();
-      chart.data.datasets[0].data.shift();
-      chart.data.datasets[1].data.shift();
-      chart.data.datasets[2].data.shift();
+      if (chart.data.labels.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+        chart.data.datasets[1].data.shift();
+        chart.data.datasets[2].data.shift();
+      }
+
+      chart.update();
     }
-
-    chart.update();
   }
 
-  function calculateMovingAverage(data, windowSize) {
-    const slice = data.slice(-windowSize);
-    const sum = slice.reduce((a, b) => a + b, 0);
+  interface CalculateMovingAverageParams {
+    data: number[];
+    windowSize: number;
+  }
+
+  function calculateMovingAverage(data: number[], windowSize: number): string {
+    const slice: number[] = data.slice(-windowSize);
+    const sum: number = slice.reduce((a: number, b: number) => a + b, 0);
     return (sum / slice.length).toFixed(2);
   }
 
