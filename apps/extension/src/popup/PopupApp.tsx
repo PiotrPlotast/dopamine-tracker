@@ -1,14 +1,51 @@
 import React, { useEffect, useRef, useState } from "react";
 import Chart from "chart.js/auto";
+import { getDomainFromUrl } from "../shared/utils/tabHelpers";
+import { getDopamineQuality } from "../shared/utils/dopamine";
+import dopamineScoreMap from "../shared/utils/domains.json";
 
 function App() {
   const [score, setScore] = useState<number | null>(null);
+  const [globalScore, setGlobalScore] = useState<number | null>(null);
+  const [domain, setDomain] = useState<string>("");
+  const [domainHistory, setDomainHistory] = useState<any[]>([]);
+  const [globalHistory, setGlobalHistory] = useState<any[]>([]);
+  const [forceUpdate, setForceUpdate] = useState(0); // force re-render
+  const [quality, setQuality] = useState<string>("");
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart | null>(null);
   const lastTimestamp = useRef(null);
   const dataPoints = useRef<number[]>([]);
 
   useEffect(() => {
+    // Get current tab's URL
+    chrome.tabs &&
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const url = tabs[0]?.url || "";
+        const d = getDomainFromUrl(url);
+        setDomain(d);
+        // Determine dopamine quality for this domain
+        const domainScore = dopamineScoreMap[d] ?? 3;
+        setQuality(getDopamineQuality(domainScore));
+        // Load domain-specific history
+        chrome.storage.local.get([`domainScores_${d}`], (result) => {
+          const domainData = result[`domainScores_${d}`] || {
+            lastScore: null,
+            scoreHistory: [],
+          };
+          setDomainHistory(domainData.scoreHistory || []);
+          setScore(domainData.lastScore?.score ?? null);
+        });
+        // Load global history
+        chrome.storage.local.get(
+          ["globalLastScore", "globalScoreHistory"],
+          (result) => {
+            setGlobalScore(result.globalLastScore?.score ?? null);
+            setGlobalHistory(result.globalScoreHistory || []);
+          }
+        );
+      });
+
     if (!chartRef.current) return;
 
     const ctx = chartRef.current.getContext("2d");
@@ -77,26 +114,99 @@ function App() {
       chart.update();
     });
 
-    const interval = setInterval(() => {
-      chrome.storage.local.get("lastScore", (result) => {
-        if (result.lastScore) {
-          const { score: newScore, timestamp } = result.lastScore;
+    // On popup open, load the latest score and update chart
+    chrome.storage.local.get("lastScore", (result) => {
+      if (result.lastScore) {
+        const { score: newScore, timestamp } = result.lastScore;
+        lastTimestamp.current = timestamp;
+        updateChart(newScore, timestamp);
+      }
+    });
 
-          if (lastTimestamp.current !== timestamp) {
-            lastTimestamp.current = timestamp;
-            updateChart(newScore, timestamp);
-          }
+    // Listen for live score updates from background
+    function handleLiveScoreUpdate(message: any) {
+      if (message.type === "LIVE_SCORE_UPDATE") {
+        if (message.domain === domain) {
+          setScore(message.entry.score);
+          setDomainHistory(message.domainScores?.scoreHistory || []);
         }
-      });
-    }, 1000);
+        setGlobalScore(message.global?.lastScore?.score ?? null);
+        setGlobalHistory(message.global?.scoreHistory || []);
+        setForceUpdate((f) => f + 1);
+      }
+    }
+    chrome.runtime.onMessage.addListener(handleLiveScoreUpdate);
 
     return () => {
-      clearInterval(interval);
       if (chartInstance.current) {
         chartInstance.current.destroy();
       }
+      chrome.runtime.onMessage.removeListener(handleLiveScoreUpdate);
     };
-  }, []);
+  }, [domain]);
+
+  useEffect(() => {
+    // Render domain chart
+    if (chartRef.current) {
+      const ctx = chartRef.current.getContext("2d");
+      if (ctx) {
+        if (chartInstance.current) chartInstance.current.destroy();
+        chartInstance.current = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: domainHistory.map((e) =>
+              new Date(e.timestamp).toLocaleTimeString()
+            ),
+            datasets: [
+              {
+                label: "Site Dopamine Score",
+                data: domainHistory.map((e) => e.score),
+                borderColor: "rgba(75,192,192,1)",
+                fill: false,
+                tension: 0.1,
+              },
+            ],
+          },
+          options: {
+            scales: { x: { display: false }, y: { min: 0, max: 10 } },
+            animation: false,
+          },
+        });
+      }
+    }
+    // Render global chart
+    const globalCanvas = document.getElementById(
+      "globalChart"
+    ) as HTMLCanvasElement;
+    if (globalCanvas) {
+      const ctx = globalCanvas.getContext("2d");
+      if (ctx) {
+        if ((globalCanvas as any)._chart)
+          (globalCanvas as any)._chart.destroy();
+        (globalCanvas as any)._chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: globalHistory.map((e) =>
+              new Date(e.timestamp).toLocaleTimeString()
+            ),
+            datasets: [
+              {
+                label: "Global Dopamine Score",
+                data: globalHistory.map((e) => e.score),
+                borderColor: "rgba(255,99,132,1)",
+                fill: false,
+                tension: 0.1,
+              },
+            ],
+          },
+          options: {
+            scales: { x: { display: false }, y: { min: 0, max: 10 } },
+            animation: false,
+          },
+        });
+      }
+    }
+  }, [domainHistory, globalHistory]);
 
   interface UpdateChartParams {
     newScore: number;
@@ -145,12 +255,41 @@ function App() {
   }
 
   return (
-    <div style={{ width: "300px", padding: "10px", fontFamily: "sans-serif" }}>
-      <h2>Live Dopamine Score</h2>
-      <div style={{ fontSize: "24px", color: "#4CAF50", marginBottom: "10px" }}>
-        {score !== null ? `Score: ${score}` : "Waiting for data..."}
+    <div style={{ width: "320px", padding: "10px", fontFamily: "sans-serif" }}>
+      <h2>Dopamine Tracker</h2>
+      <div style={{ marginBottom: 12 }}>
+        <b>Current Site:</b> {domain || "Unknown"}
+        <br />
+        <span style={{ fontSize: 20, color: "#4CAF50" }}>
+          {score !== null ? `Score: ${score}` : "No data"}
+        </span>
+        {quality && (
+          <span
+            style={{
+              marginLeft: 10,
+              fontWeight: 600,
+              color:
+                quality === "good"
+                  ? "green"
+                  : quality === "neutral"
+                  ? "orange"
+                  : "red",
+            }}
+          >
+            {quality.charAt(0).toUpperCase() + quality.slice(1)} Dopamine
+          </span>
+        )}
       </div>
-      <canvas ref={chartRef} width="300" height="150"></canvas>
+      <canvas ref={chartRef} width="300" height="120"></canvas>
+      <div style={{ marginTop: 18 }}>
+        <b>Global Dopamine</b>
+        <br />
+        <span style={{ fontSize: 18, color: "#faad14" }}>
+          {globalScore !== null ? `Score: ${globalScore}` : "No data"}
+        </span>
+        <div style={{ height: 8 }} />
+        <canvas id="globalChart" width="300" height="60"></canvas>
+      </div>
     </div>
   );
 }
