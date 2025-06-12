@@ -1,4 +1,7 @@
-import { classifyDopamineActivity } from "./shared/utils/dopamine";
+import {
+  classifyDopamineActivity,
+  incrementSiteOpenCount,
+} from "./shared/utils/dopamine";
 import { getDomainFromUrl } from "./shared/utils/tabHelpers";
 
 let activeTab: string | null = null;
@@ -10,6 +13,9 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     if (tab && tab.url) {
       console.log("Active tab URL:", tab.url);
       activeTab = tab.url;
+      // Increment open count for this domain
+      const domain = getDomainFromUrl(tab.url);
+      incrementSiteOpenCount(domain);
     }
   } catch (error) {
     console.error("Error getting active tab:", error);
@@ -21,6 +27,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     console.log("Active tab updated URL:", changeInfo.url);
     oldTab = activeTab;
     activeTab = changeInfo.url;
+    // Increment open count for this domain
+    const domain = getDomainFromUrl(changeInfo.url);
+    incrementSiteOpenCount(domain);
   }
 });
 
