@@ -2,6 +2,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import LeaderboardIcon from "@mui/icons-material/Leaderboard";
+import PeopleIcon from "@mui/icons-material/People";
 import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import LoginIcon from "@mui/icons-material/Login";
 export default function Sidebar() {
@@ -9,7 +10,7 @@ export default function Sidebar() {
     <aside className="h-full flex flex-col justify-between">
       <ul className="flex flex-col p-8 justify-between h-full">
         <li>
-          <a href="#" className="text-5xl font-bold">
+          <a href="#" className="text-4xl font-bold">
             Dopamind
           </a>
         </li>
@@ -20,7 +21,11 @@ export default function Sidebar() {
           </a>
           <a href="#" className="flex items-center gap-2">
             <ShowChartIcon />
-            Pro Visualisations
+            Statistics
+          </a>
+          <a href="#" className="flex items-center gap-2">
+            <PeopleIcon />
+            Friends
           </a>
           <a href="#" className="flex items-center gap-2">
             <LeaderboardIcon />
