@@ -1,12 +1,10 @@
-import "./App.css";
-
-function App() {
+import Sidebar from "./Sidebar";
+import Dashboard from "./Dashboard";
+export default function App() {
   return (
-    <>
-      <h1>Dashboard</h1>
-      <p>Welcome to the dashboard!</p>
-    </>
+    <div className="flex h-screen w-screen items-center justify-center bg-gray-100">
+      <Sidebar />
+      <Dashboard />
+    </div>
   );
 }
-
-export default App;
