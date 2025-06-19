@@ -43,7 +43,7 @@ export default function Sidebar() {
           </p>
           <a
             href="#"
-            className="font-bold bg-blue-300 rounded-4xl py-3 px-7 hover:bg-blue-200 transition-colors"
+            className="font-bold bg-dopamind-primary text-dopamind-surface rounded-4xl py-3 px-7 hover:opacity-90 transition-all"
           >
             Upgrade
           </a>
