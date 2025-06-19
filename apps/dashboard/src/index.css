@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@theme {
+  --color-dopamind-background: #f9fafb;
+  --color-dopamind-surface: #ffffff;
+  --color-dopamind-border: #e5e7eb;
+  --color-dopamind-primary: #6366f1;
+  --color-dopamind-secondary: #06b6d4;
+  --color-dopamind-tertiary: #facc15;
+  --color-dopamind-success: #34d399;
+  --color-dopamind-warning: #f87171;
+  --color-dopamind-text-primary: #111827;
+  --color-dopamind-text-secondary: #6b7280;
+}
