@@ -10,7 +10,7 @@ export default function Sidebar() {
     <aside className="h-full flex flex-col justify-between">
       <ul className="flex flex-col p-8 justify-between h-full">
         <li>
-          <a href="#" className="text-4xl font-bold">
+          <a href="#" className="text-4xl font-bold text-dopamind-primary">
             Dopamind
           </a>
         </li>
