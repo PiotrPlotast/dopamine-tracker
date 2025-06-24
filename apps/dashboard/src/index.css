@@ -12,3 +12,30 @@
   --color-dopamind-text-primary: #111827;
   --color-dopamind-text-secondary: #6b7280;
 }
+
+.dashboard-grid {
+  grid-template-areas:
+    "a a a"
+    "b c d"
+    "b e e";
+}
+
+.dashboard-grid-a {
+  grid-area: a;
+}
+
+.dashboard-grid-b {
+  grid-area: b;
+}
+
+.dashboard-grid-c {
+  grid-area: c;
+}
+
+.dashboard-grid-d {
+  grid-area: d;
+}
+
+.dashboard-grid-e {
+  grid-area: e;
+}
