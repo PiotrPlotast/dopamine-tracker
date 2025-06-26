@@ -7,7 +7,7 @@ import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import LoginIcon from "@mui/icons-material/Login";
 export default function Sidebar() {
   return (
-    <aside className="h-full flex flex-col justify-between">
+    <aside className="hidden h-full md:flex md:flex-col md:justify-between">
       <ul className="flex flex-col p-8 justify-between h-full">
         <li>
           <a href="#" className="text-4xl font-bold text-dopamind-primary">
