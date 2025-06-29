@@ -6,15 +6,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { motion } from "framer-motion";
 
 export default function DopamineStatsCard({ data }) {
   return (
-    <motion.div
-      className="dashboard-grid-c bg-white border-dopamind-border border-2 p-6 rounded-2xl shadow-xl"
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 200 }}
-    >
+    <div className="dashboard-grid-c bg-white border-dopamind-border border-2 p-6 rounded-2xl shadow-xl">
       <h3 className="text-lg font-semibold mb-2">🧠 Dopamine Summary</h3>
       <div className="flex justify-between text-sm">
         <span>Today's Dopamine:</span>
@@ -41,6 +36,6 @@ export default function DopamineStatsCard({ data }) {
           </LineChart>
         </ResponsiveContainer>
       </div>
-    </motion.div>
+    </div>
   );
 }

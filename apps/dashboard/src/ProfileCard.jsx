@@ -1,12 +1,6 @@
-import { motion } from "framer-motion";
-
 export default function ProfileCard() {
   return (
-    <motion.div
-      className="dashboard-grid-b bg-white border-dopamind-border border-2 p-6 rounded-2xl shadow-xl flex flex-col items-center text-center"
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 200 }}
-    >
+    <div className="dashboard-grid-b bg-white border-dopamind-border border-2 p-6 rounded-2xl shadow-xl flex flex-col items-center text-center">
       <img
         src="https://i.pravatar.cc/80"
         alt="Avatar"
@@ -32,14 +26,12 @@ export default function ProfileCard() {
           Points & Rewards
         </div>
         <p className="text-sm">
-          🎯 Points: <span className="font-bold">1240</span> / 1500
+          🏯 Points: <span className="font-bold">1240</span> / 1500
         </p>
         <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1 overflow-hidden">
-          <motion.div
+          <div
             className="bg-indigo-500 h-2.5 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: "82%" }}
-            transition={{ duration: 1, delay: 0.3 }}
+            style={{ width: "82%", transition: "width 1s" }}
           />
         </div>
         <p className="text-xs text-gray-400 mt-1">Level 3: Dopamine Monk</p>
@@ -47,6 +39,6 @@ export default function ProfileCard() {
       <p className="mt-4 italic text-sm text-gray-400">
         “Discipline {">"} Dopamine”
       </p>
-    </motion.div>
+    </div>
   );
 }

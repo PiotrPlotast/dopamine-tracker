@@ -5,6 +5,10 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  test: {
+    environment: "jsdom", // simulates DOM
+    globals: true, // enables describe, it, expect without importing
+  },
   plugins: [react()],
   build: {
     outDir: "dist",

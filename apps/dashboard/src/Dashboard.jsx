@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import GreetingCard from "./GreetingCard";
 import ProfileCard from "./ProfileCard";
 import DopamineStatsCard from "./DopamineStatsCard";
@@ -17,17 +16,12 @@ const dopamineData = [
 
 export default function Dashboard() {
   return (
-    <motion.div
-      className="dashboard-grid"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
+    <div className="dashboard-grid">
       <GreetingCard />
       <ProfileCard />
       <DopamineStatsCard data={dopamineData} />
       <TriggersCard />
       <OverspentCard />
-    </motion.div>
+    </div>
   );
 }

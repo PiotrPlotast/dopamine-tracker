@@ -1,12 +1,6 @@
-import { motion } from "framer-motion";
-
 export default function TriggersCard() {
   return (
-    <motion.div
-      className="dashboard-grid-d bg-white border-dopamind-border border-2 p-6 rounded-2xl shadow-xl"
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 200 }}
-    >
+    <div className="dashboard-grid-d bg-white border-dopamind-border border-2 p-6 rounded-2xl shadow-xl">
       <h3 className="text-md font-semibold mb-2 text-red-500">
         🚫 Bad Dopamine Websites
       </h3>
@@ -23,6 +17,6 @@ export default function TriggersCard() {
         <li>Udemy</li>
         <li>Medium</li>
       </ul>
-    </motion.div>
+    </div>
   );
 }
